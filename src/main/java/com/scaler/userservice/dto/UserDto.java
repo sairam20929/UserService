@@ -1,5 +1,7 @@
 package com.scaler.userservice.dto;
 
+import com.scaler.userservice.model.Role;
+import com.scaler.userservice.model.User;
 import lombok.Getter;
 import lombok.Setter;
 
