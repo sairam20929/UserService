@@ -1,4 +1,4 @@
-package com.scaler.userService;
+package com.scaler.userservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
