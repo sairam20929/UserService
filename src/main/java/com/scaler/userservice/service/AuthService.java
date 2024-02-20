@@ -10,6 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMapAdapter;
 
@@ -23,9 +24,13 @@ public class AuthService {
 
     private final SessionRepository sessionRepository;
 
-    public AuthService(UserRepository userRepository, SessionRepository sessionRepository) {
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public AuthService(UserRepository userRepository, SessionRepository sessionRepository,
+                       BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
     public ResponseEntity<UserDto> login(String email, String password) {
@@ -33,13 +38,13 @@ public class AuthService {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isEmpty()) {
-            return null;
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
         User user = userOptional.get();
 
-        if (!user.getPassword().equals(password)) {
-            return null;
+        if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         String token = RandomStringUtils.randomAlphanumeric(30);
@@ -51,15 +56,12 @@ public class AuthService {
 
         sessionRepository.save(session);
 
-        UserDto userDto = new UserDto();
+        UserDto userDto = UserDto.from(user);
 
         MultiValueMapAdapter<String, String> headers = new MultiValueMapAdapter<>(new HashMap<>());
         headers.add(HttpHeaders.SET_COOKIE, "auth-token:" + token);
 
-        ResponseEntity<UserDto> response = new ResponseEntity<>(userDto, headers, HttpStatus.OK);
-        response.getHeaders().add(HttpHeaders.SET_COOKIE, token);
-
-        return response;
+        return new ResponseEntity<>(userDto, headers, HttpStatus.OK);
     }
 
     public ResponseEntity<Void> logout(String token, Long userId) {
@@ -81,7 +83,7 @@ public class AuthService {
 
         User user = new User();
         user.setEmail(email);
-        user.setPassword(password);
+        user.setPassword(bCryptPasswordEncoder.encode(password));
 
         User savedUser = userRepository.save(user);
 
