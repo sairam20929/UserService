@@ -6,7 +6,6 @@ import com.scaler.userservice.model.SessionStatus;
 import com.scaler.userservice.model.User;
 import com.scaler.userservice.repository.SessionRepository;
 import com.scaler.userservice.repository.UserRepository;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +15,8 @@ import org.springframework.util.MultiValueMapAdapter;
 
 import java.util.HashMap;
 import java.util.Optional;
+
+import static com.scaler.userservice.util.JwtUtil.generateJWT;
 
 @Service
 public class AuthService {
@@ -47,7 +48,7 @@ public class AuthService {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        String token = RandomStringUtils.randomAlphanumeric(30);
+        final String token = generateJWT(user);
 
         Session session = new Session();
         session.setSessionStatus(SessionStatus.ACTIVE);
