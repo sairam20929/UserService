@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMapAdapter;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -54,6 +55,7 @@ public class AuthService {
         session.setSessionStatus(SessionStatus.ACTIVE);
         session.setToken(token);
         session.setUser(user);
+        session.setExpiringAt(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24));
 
         sessionRepository.save(session);
 
