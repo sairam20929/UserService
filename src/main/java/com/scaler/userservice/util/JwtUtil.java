@@ -15,7 +15,7 @@ public class JwtUtil {
     /**
      * Below is JWT Token that is generated.
      * <p>
-     * jwtToken = alg + payload + signature(secretKey)
+     * jwtToken = Header (alg) + payload + signature(secretKey)
      * <p>
      * eg: eyJhbGciOiJIUzI1NiJ9.
      *     e2NyZWF0ZWRBdD1XZWQgRmViIDIxIDIwOjAwOjAzIElTVCAyMDI0LCByb2xlcz1bXSwgZW1haWw9amVldmFuQGdtYWlsLmNvbX0.
@@ -23,18 +23,20 @@ public class JwtUtil {
      */
     public static String generateJWT(User user) {
 
+        /* Payload */
         Map<String, Object> jsonForJwt = new HashMap<>();
         jsonForJwt.put("email", user.getEmail());
         jsonForJwt.put("roles", user.getRoles());
         jsonForJwt.put("createdAt", new Date());
 
-        String payload = jsonForJwt.toString();
-
+        /* Header */
         MacAlgorithm alg = Jwts.SIG.HS256;
-        SecretKey key = alg.key().build();
 
-        System.out.println("KEY Generated Is: " + Arrays.toString(key.getEncoded()));
+        /* Signature */
+        SecretKey SecretKey = alg.key().build();
 
-        return Jwts.builder().content(payload).signWith(key, alg).compact();
+        System.out.println("KEY Generated Is: " + Arrays.toString(SecretKey.getEncoded()));
+
+        return Jwts.builder().claims(jsonForJwt).signWith(SecretKey, alg).compact();
     }
 }
