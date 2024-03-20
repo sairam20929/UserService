@@ -6,6 +6,9 @@ import com.scaler.userservice.model.SessionStatus;
 import com.scaler.userservice.model.User;
 import com.scaler.userservice.repository.SessionRepository;
 import com.scaler.userservice.repository.UserRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMapAdapter;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
@@ -26,12 +30,15 @@ public class AuthService {
 
     private final SessionRepository sessionRepository;
 
+    private final SecretKey secretKey;
+
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public AuthService(UserRepository userRepository, SessionRepository sessionRepository,
+    public AuthService(UserRepository userRepository, SessionRepository sessionRepository, SecretKey secretKey,
                        BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
+        this.secretKey = secretKey;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
@@ -98,7 +105,25 @@ public class AuthService {
         Optional<Session> sessionOptional = sessionRepository.findByTokenAndUser_Id(token, userId);
 
         if (sessionOptional.isEmpty()) {
+
+            System.out.println("No Token or User found");
             return null;
+        }
+
+        Session session = sessionOptional.get();
+        String sessionToken = session.getToken();
+
+        JwtParser jwtParser = Jwts.parser().verifyWith(secretKey).build();
+        Claims claims = jwtParser.parseSignedClaims(sessionToken).getPayload();
+
+        Date expiringAt = claims.get("expiryTime", Date.class);
+        if (expiringAt.before(new Date(System.currentTimeMillis()))) {
+
+            System.out.println("Token Expired");
+
+            session.setSessionStatus(SessionStatus.ENDED);
+            sessionRepository.save(session);
+            return SessionStatus.ENDED;
         }
 
         return SessionStatus.ACTIVE;

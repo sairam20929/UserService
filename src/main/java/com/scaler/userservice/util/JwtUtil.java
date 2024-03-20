@@ -2,15 +2,23 @@ package com.scaler.userservice.util;
 
 import com.scaler.userservice.model.User;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.MacAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@Component
 public class JwtUtil {
+
+    private static SecretKey secretKey;
+
+    @Autowired
+    public JwtUtil(SecretKey secretKey) {
+        JwtUtil.secretKey = secretKey;
+    }
 
     /**
      * Below is JWT Token that is generated.
@@ -18,9 +26,10 @@ public class JwtUtil {
      * jwtToken = Header (alg) + payload + signature(secretKey)
      * <p>
      * eg: eyJhbGciOiJIUzI1NiJ9.
-     *     e2NyZWF0ZWRBdD1XZWQgRmViIDIxIDIwOjAwOjAzIElTVCAyMDI0LCByb2xlcz1bXSwgZW1haWw9amVldmFuQGdtYWlsLmNvbX0.
-     *     QsLWfBoHiKAplXN6bCzCaNm2edXf1yxkAjUtAXs_nkE
+     * e2NyZWF0ZWRBdD1XZWQgRmViIDIxIDIwOjAwOjAzIElTVCAyMDI0LCByb2xlcz1bXSwgZW1haWw9amVldmFuQGdtYWlsLmNvbX0.
+     * QsLWfBoHiKAplXN6bCzCaNm2edXf1yxkAjUtAXs_nkE
      */
+
     public static String generateJWT(User user) {
 
         /* Payload */
@@ -28,15 +37,9 @@ public class JwtUtil {
         jsonForJwt.put("email", user.getEmail());
         jsonForJwt.put("roles", user.getRoles());
         jsonForJwt.put("createdAt", new Date());
+        jsonForJwt.put("expiryTime", new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10));
 
-        /* Header */
-        MacAlgorithm alg = Jwts.SIG.HS256;
-
-        /* Signature */
-        SecretKey SecretKey = alg.key().build();
-
-        System.out.println("KEY Generated Is: " + Arrays.toString(SecretKey.getEncoded()));
-
-        return Jwts.builder().claims(jsonForJwt).signWith(SecretKey, alg).compact();
+        return Jwts.builder().claims(jsonForJwt).signWith(secretKey).compact();
     }
+
 }
