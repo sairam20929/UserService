@@ -119,7 +119,7 @@ public class AuthService {
         Date expiringAt = claims.get("expiryTime", Date.class);
         if (expiringAt.before(new Date(System.currentTimeMillis()))) {
 
-            System.out.println("Token Expired");
+            System.out.println("Token Expired" + expiringAt + " " + new Date(System.currentTimeMillis()));
 
             session.setSessionStatus(SessionStatus.ENDED);
             sessionRepository.save(session);

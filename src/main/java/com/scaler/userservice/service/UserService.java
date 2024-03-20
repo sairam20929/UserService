@@ -27,11 +27,8 @@ public class UserService {
 
         Optional<User> userOptional = userRepository.findById(userId);
 
-        if (userOptional.isEmpty()) {
-            return null;
-        }
+        return userOptional.map(UserDto::from).orElse(null);
 
-        return UserDto.from(userOptional.get());
     }
 
     public UserDto setUserRoles(Long userId, List<Long> roleIds) {
